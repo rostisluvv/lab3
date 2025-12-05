@@ -1,0 +1,58 @@
+name: lab3 CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest   # GitHub-hosted runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requrements.txt  # или requirements.txt
+
+      - name: Run pytest
+        run: |
+          pytest test_file.py
+
+  deploy:
+    name: Deploy to VirtualBox server
+    needs: tests              # запускать только если тесты прошли
+    runs-on: self-hosted      # наш runner на виртуалке
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare deploy directory
+        run: |
+          sudo mkdir -p /var/www/project
+          sudo cp -r ./* /var/www/project
+
+      - name: Install dependencies on server
+        run: |
+          cd /var/www/project
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+          ./venv/bin/pip install --upgrade pip
+          ./venv/bin/pip install -r requrements.txt  # или requirements.txt
+
+      - name: Run application
+        run: |
+          cd /var/www/project
+          # остановить старый процесс, если нужно (упрощённо)
+          pkill -f "python3 main.py" || true
+          nohup ./venv/bin/python main.py > app.log 2>&1 &
