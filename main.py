@@ -10,7 +10,7 @@ class BankInterest(object):
         rest = self.summ
         mp_real = self.summ / (self.period * 12.0)
         while mp_cnt != 0:
-            mp = mp_real + (rest * self.perc / 1200)
+            mp = mp_real + (rest * self.perc / 1000)
             arr.append(round(mp, 2))
             rest = rest - mp_real
             mp_cnt = mp_cnt - 1
